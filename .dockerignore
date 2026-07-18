@@ -1,0 +1,38 @@
+# ==============================================
+# RateFlow — Docker Ignore File
+# Excludes unnecessary files from build context
+# ==============================================
+
+# Dependencies
+node_modules/
+.npm/
+npm-debug.log*
+
+# Next.js Build Outputs
+.next/
+out/
+build/
+
+# Testing and Coverage
+coverage/
+tests/
+vitest.config.ts
+
+# Documentation and IDE Configs
+.git/
+.gitignore
+.vscode/
+.dockerignore
+docs/
+postman/
+README.md
+CLAUDE.md
+AGENTS.md
+
+# Environment Files
+.env
+.env*.local
+
+# System Files
+.DS_Store
+Thumbs.db

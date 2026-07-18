@@ -1,0 +1,160 @@
+{
+  "info": {
+    "name": "RateFlow API",
+    "description": "Rate Limiter as a Service — API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "rf_your_api_key_here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health",
+            "description": "Returns health status of all services (Redis, PostgreSQL, Queue, Rate Limiter)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rate Check",
+      "item": [
+        {
+          "name": "Check Rate Limit",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/check",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"{{apiKey}}\",\n  \"endpoint\": \"/api/users\"\n}"
+            },
+            "description": "Check if a request is allowed based on the client's rate limit configuration"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "clients"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Returns paginated list of clients"
+          }
+        },
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/clients",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My New Client\",\n  \"rateLimit\": 100,\n  \"windowSeconds\": 60\n}"
+            },
+            "description": "Creates a new client with an auto-generated API key"
+          }
+        },
+        {
+          "name": "Get Client",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/clients/:id",
+            "description": "Returns a single client with API keys"
+          }
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/clients/:id",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"rateLimit\": 500,\n  \"active\": true\n}"
+            },
+            "description": "Updates client properties"
+          }
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/clients/:id",
+            "description": "Permanently deletes a client and all related data"
+          }
+        },
+        {
+          "name": "Generate API Key",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/clients/:id/api-key",
+            "description": "Generates a new API key for the client"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics?days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics"],
+              "query": [
+                { "key": "days", "value": "30" },
+                { "key": "clientId", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Returns aggregated analytics data for charts"
+          }
+        }
+      ]
+    }
+  ]
+}

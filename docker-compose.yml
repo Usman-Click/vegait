@@ -1,0 +1,77 @@
+# ==============================================
+# RateFlow — Docker Compose
+# Run the full stack: App, Worker, Redis, PostgreSQL
+# ==============================================
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rateflow
+      POSTGRES_PASSWORD: rateflow
+      POSTGRES_DB: rateflow
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U rateflow" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for rate limiting counters and BullMQ
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Next.js application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://rateflow:rateflow@postgres:5432/rateflow?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # BullMQ log worker (processes request logs asynchronously)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: [ "node", "-e", "require('./src/workers/log-worker.ts')" ]
+    environment:
+      DATABASE_URL: "postgresql://rateflow:rateflow@postgres:5432/rateflow?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

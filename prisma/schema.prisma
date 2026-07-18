@@ -1,0 +1,90 @@
+// ==============================================
+// RateFlow — Prisma Schema
+// Defines all persistent data models and relationships
+// ==============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Represents a registered client/tenant that uses the rate limiter service.
+/// Each client has configurable rate limits and can have multiple API keys.
+model Client {
+  id            String       @id @default(cuid())
+  name          String
+  apiKey        String       @unique /// Primary API key (legacy field, kept for backwards compat)
+  rateLimit     Int          @default(100) /// Max requests allowed per window
+  windowSeconds Int          @default(60) /// Time window in seconds
+  active        Boolean      @default(true) /// Whether this client is currently active
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relationships
+  requestLogs   RequestLog[]
+  analytics     Analytics[]
+  apiKeys       ApiKey[]
+
+  @@index([apiKey])
+  @@index([active])
+  @@map("clients")
+}
+
+/// Logs every rate-check request for audit and analytics purposes.
+/// Written asynchronously via BullMQ worker — never blocks the API response.
+model RequestLog {
+  id           String   @id @default(cuid())
+  clientId     String
+  endpoint     String   /// The endpoint/path the client tried to access
+  allowed      Boolean  /// Whether the request was allowed by the rate limiter
+  responseTime Float    /// Time taken to process the rate check (ms)
+  timestamp    DateTime @default(now())
+
+  // Relationships
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, timestamp])
+  @@index([timestamp])
+  @@map("request_logs")
+}
+
+/// Pre-aggregated daily analytics per client.
+/// Updated by the BullMQ worker on each processed log entry.
+model Analytics {
+  id                  String   @id @default(cuid())
+  clientId            String
+  totalRequests       Int      @default(0)
+  approvedRequests    Int      @default(0)
+  rejectedRequests    Int      @default(0)
+  averageResponseTime Float    @default(0)
+  date                DateTime @db.Date /// Day-level granularity (no time component)
+
+  // Relationships
+  client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date]) /// One analytics row per client per day
+  @@index([clientId, date])
+  @@index([date])
+  @@map("analytics")
+}
+
+/// API keys issued to clients. A client can have multiple active keys.
+/// Keys can be individually revoked without affecting the client record.
+model ApiKey {
+  id        String   @id @default(cuid())
+  clientId  String
+  key       String   @unique /// The actual API key string
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relationships
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([clientId])
+  @@map("api_keys")
+}

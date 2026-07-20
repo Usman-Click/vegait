@@ -73,10 +73,24 @@ vi.mock("@/lib/queue", () => ({
   enqueueLog: vi.fn(),
 }));
 
-// Mocking redis health check
+// Mocking redis health check and client methods
 vi.mock("@/lib/redis", () => ({
   checkRedisHealth: vi.fn(() => Promise.resolve(5)),
+  redis: {
+    get: vi.fn(() => Promise.resolve(null)),
+    setex: vi.fn(() => Promise.resolve("OK")),
+    del: vi.fn(() => Promise.resolve(1)),
+  },
 }));
+
+// Mock next/server to provide a synchronous implementation of 'after' in tests
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: vi.fn((callback) => callback()),
+  };
+});
 
 import { prisma } from "@/lib/prisma";
 import { rateLimiter } from "@/lib/rate-limiter/rate-limiter";

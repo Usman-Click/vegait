@@ -5,6 +5,7 @@
 
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { updateClientSchema } from "@/lib/validators/client";
 
 /**
@@ -79,7 +80,24 @@ export async function PATCH(
     const client = await prisma.client.update({
       where: { id },
       data: parsed.data,
+      include: {
+        apiKeys: true,
+      },
     });
+
+    // Invalidate client lookup cache
+    try {
+      const keysToInvalidate = [
+        client.apiKey,
+        ...(client.apiKeys ? client.apiKeys.map((k) => k.key) : []),
+      ];
+      const cacheKeys = keysToInvalidate.map((key) => `rateflow:client-cache:${key}`);
+      if (cacheKeys.length > 0) {
+        await redis.del(...cacheKeys);
+      }
+    } catch (err) {
+      console.error("[Cache Invalidation Error]", err);
+    }
 
     return Response.json(client);
   } catch (error) {
@@ -103,7 +121,12 @@ export async function DELETE(
     const { id } = await params;
 
     // Check client exists
-    const existing = await prisma.client.findUnique({ where: { id } });
+    const existing = await prisma.client.findUnique({
+      where: { id },
+      include: {
+        apiKeys: true,
+      },
+    });
     if (!existing) {
       return Response.json(
         { error: "Client not found" },
@@ -112,6 +135,20 @@ export async function DELETE(
     }
 
     await prisma.client.delete({ where: { id } });
+
+    // Invalidate client lookup cache
+    try {
+      const keysToInvalidate = [
+        existing.apiKey,
+        ...(existing.apiKeys ? existing.apiKeys.map((k) => k.key) : []),
+      ];
+      const cacheKeys = keysToInvalidate.map((key) => `rateflow:client-cache:${key}`);
+      if (cacheKeys.length > 0) {
+        await redis.del(...cacheKeys);
+      }
+    } catch (err) {
+      console.error("[Cache Invalidation Error]", err);
+    }
 
     return Response.json({ message: "Client deleted successfully" });
   } catch (error) {

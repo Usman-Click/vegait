@@ -5,6 +5,7 @@
 
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { generateApiKey } from "@/lib/api-key";
 
 /**
@@ -31,7 +32,7 @@ export async function POST(
     const newKey = generateApiKey();
 
     // Create the new API key and update the client's primary key
-    const [apiKeyRecord] = await prisma.$transaction([
+    const [apiKeyRecord, updatedClient] = await prisma.$transaction([
       prisma.apiKey.create({
         data: {
           clientId: id,
@@ -41,8 +42,25 @@ export async function POST(
       prisma.client.update({
         where: { id },
         data: { apiKey: newKey },
+        include: {
+          apiKeys: true,
+        },
       }),
     ]);
+
+    // Invalidate client lookup cache for all keys associated with this client
+    try {
+      const keysToInvalidate = [
+        updatedClient.apiKey,
+        ...(updatedClient.apiKeys ? updatedClient.apiKeys.map((k) => k.key) : []),
+      ];
+      const cacheKeys = keysToInvalidate.map((key) => `rateflow:client-cache:${key}`);
+      if (cacheKeys.length > 0) {
+        await redis.del(...cacheKeys);
+      }
+    } catch (err) {
+      console.error("[Cache Invalidation Error]", err);
+    }
 
     return Response.json(
       { key: apiKeyRecord.key, id: apiKeyRecord.id },

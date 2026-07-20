@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart3, Clock, TrendingUp } from "lucide-react";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { RequestChart } from "@/components/dashboard/request-chart";
@@ -48,7 +49,20 @@ export default function AnalyticsPage() {
   const [days, setDays] = useState(30);
   const { data, isLoading } = useAnalytics(days);
 
-  const chartData = data?.data || [];
+  // Memoize chart data to avoid unnecessary re-renders
+  const chartData = useMemo(() => data?.data || [], [data?.data]);
+
+  // Premium empty state layout
+  const renderEmptyState = (icon: typeof BarChart3, title: string, description: string) => {
+    const IconComponent = icon;
+    return (
+      <div className="flex h-[300px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/30 text-center p-6">
+        <IconComponent className="h-10 w-10 text-muted-foreground/50 stroke-[1.5]" />
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground max-w-xs">{description}</p>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -69,16 +83,22 @@ export default function AnalyticsPage() {
 
       {/* Bottom row: bar chart + line chart */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Approved vs Rejected bar chart */}
+        {/* Approved vs Rate Limited bar chart */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Approved vs Rejected
+              Approved vs Rate Limited
             </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[300px] w-full" />
+            ) : chartData.length === 0 ? (
+              renderEmptyState(
+                BarChart3,
+                "No traffic data yet",
+                "Start sending requests to see approved vs rate limited analytics."
+              )
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
@@ -109,7 +129,7 @@ export default function AnalyticsPage() {
                   />
                   <Bar
                     dataKey="rejectedRequests"
-                    name="Rejected"
+                    name="Rate Limited"
                     fill="#ef4444"
                     radius={[4, 4, 0, 0]}
                   />
@@ -129,6 +149,12 @@ export default function AnalyticsPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[300px] w-full" />
+            ) : chartData.length === 0 ? (
+              renderEmptyState(
+                Clock,
+                "No performance data yet",
+                "Response times will appear here as API requests are processed."
+              )
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>

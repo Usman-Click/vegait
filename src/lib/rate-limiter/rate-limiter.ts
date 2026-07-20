@@ -19,12 +19,12 @@ import type { RateLimitResult } from "@/types";
  * current limiter mode to operators.
  */
 export class RateLimiter {
-  private rediLimiter: TokenBucketLimiter;
+  private redisLimiter: TokenBucketLimiter;
   private memoryLimiter: InMemoryLimiter;
   private degraded: boolean = false;
 
   constructor(redis: Redis) {
-    this.rediLimiter = new TokenBucketLimiter(redis);
+    this.redisLimiter = new TokenBucketLimiter(redis);
     this.memoryLimiter = new InMemoryLimiter();
   }
 
@@ -38,7 +38,7 @@ export class RateLimiter {
     windowSeconds: number
   ): Promise<RateLimitResult> {
     try {
-      const result = await this.rediLimiter.check(
+      const result = await this.redisLimiter.check(
         clientId,
         maxTokens,
         windowSeconds
@@ -69,7 +69,7 @@ export class RateLimiter {
   async reset(clientId: string): Promise<void> {
     this.memoryLimiter.reset(clientId);
     try {
-      await this.rediLimiter.reset(clientId);
+      await this.redisLimiter.reset(clientId);
     } catch {
       // Ignore Redis errors during reset
     }

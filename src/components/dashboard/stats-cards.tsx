@@ -50,7 +50,7 @@ const cards = [
     format: formatNumber,
   },
   {
-    title: "Rejected",
+    title: "Rate Limited",
     key: "rejectedRequests" as const,
     icon: XCircle,
     color: "text-red-500",
@@ -71,20 +71,23 @@ export function StatsCards({ data, isLoading }: StatsCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.key} className="relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card
+          key={card.key}
+          className="relative overflow-hidden transition-all duration-300 hover:shadow-md hover:scale-[1.01] hover:border-muted-foreground/30 focus-within:ring-2 focus-within:ring-ring"
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-3 px-6">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {card.title}
             </CardTitle>
-            <div className={`rounded-lg p-2 ${card.bgColor}`}>
+            <div className={`rounded-lg p-2 ${card.bgColor} transition-transform duration-300 group-hover:scale-110`}>
               <card.icon className={`h-4 w-4 ${card.color}`} />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4 px-6">
             {isLoading ? (
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-9 w-24" />
             ) : (
-              <p className="text-2xl font-bold tracking-tight">
+              <p className="text-3xl font-bold tracking-tight text-foreground">
                 {data ? card.format(data[card.key]) : "0"}
               </p>
             )}

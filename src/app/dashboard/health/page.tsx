@@ -58,12 +58,12 @@ function ServiceCard({
 }) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <Card className="transition-all duration-300">
+        <CardHeader className="flex flex-row items-center justify-between pb-3 px-6">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           <Skeleton className="h-5 w-16" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-5 px-6">
           <Skeleton className="h-4 w-32 mb-2" />
           <Skeleton className="h-4 w-24" />
         </CardContent>
@@ -75,33 +75,40 @@ function ServiceCard({
   const StatusIcon = status?.icon || AlertTriangle;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="transition-all duration-300 hover:shadow-md hover:scale-[1.01] hover:border-muted-foreground/30">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 px-6">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
         </div>
-        {status && <Badge variant={status.variant}>{status.label}</Badge>}
+        {status && <Badge className="text-2xs px-2 py-0" variant={status.variant}>{status.label}</Badge>}
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3 pb-5 px-6">
         <div className="flex items-center gap-2">
-          <StatusIcon
-            className={`h-4 w-4 ${
+          <div className="relative flex h-2 w-2">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
               health?.status === "healthy"
-                ? "text-emerald-500"
+                ? "bg-emerald-400"
                 : health?.status === "degraded"
-                  ? "text-amber-500"
-                  : "text-red-500"
-            }`}
-          />
-          <span className="text-sm text-muted-foreground">
+                  ? "bg-amber-400"
+                  : "bg-red-400"
+            }`} />
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${
+              health?.status === "healthy"
+                ? "bg-emerald-500"
+                : health?.status === "degraded"
+                  ? "bg-amber-500"
+                  : "bg-red-500"
+            }`} />
+          </div>
+          <span className="text-sm text-muted-foreground font-medium">
             {health?.message || "Unknown"}
           </span>
         </div>
         {health?.latency !== undefined && (
           <p className="text-xs text-muted-foreground">
             Latency:{" "}
-            <span className="font-mono font-medium">{health.latency}ms</span>
+            <span className="font-mono font-medium bg-muted/60 px-1.5 py-0.5 rounded text-foreground">{health.latency}ms</span>
           </p>
         )}
       </CardContent>
@@ -119,20 +126,27 @@ export default function HealthPage() {
       </p>
 
       {/* Overall status */}
-      <Card>
-        <CardContent className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`h-3 w-3 rounded-full ${
+      <Card className="shadow-sm border-border bg-card">
+        <CardContent className="flex items-center justify-between py-5 px-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-3.5 w-3.5">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                 data?.status === "healthy"
-                  ? "bg-emerald-500 animate-pulse"
+                  ? "bg-emerald-400"
                   : data?.status === "degraded"
-                    ? "bg-amber-500 animate-pulse"
-                    : "bg-red-500 animate-pulse"
-              }`}
-            />
+                    ? "bg-amber-400"
+                    : "bg-red-400"
+              }`} />
+              <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${
+                data?.status === "healthy"
+                  ? "bg-emerald-500"
+                  : data?.status === "degraded"
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+              }`} />
+            </div>
             <div>
-              <p className="font-semibold">System Status</p>
+              <p className="font-semibold text-foreground">System Status</p>
               <p className="text-sm text-muted-foreground">
                 {isLoading
                   ? "Checking..."
@@ -146,6 +160,7 @@ export default function HealthPage() {
           </div>
           {data && (
             <Badge
+              className="text-xs uppercase px-2.5 py-0.5"
               variant={
                 data.status === "healthy"
                   ? "success"
@@ -154,7 +169,7 @@ export default function HealthPage() {
                     : "destructive"
               }
             >
-              {data.status.toUpperCase()}
+              {data.status}
             </Badge>
           )}
         </CardContent>

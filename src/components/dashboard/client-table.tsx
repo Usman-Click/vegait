@@ -36,6 +36,7 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import {
   useClients,
@@ -181,8 +182,14 @@ export function ClientTable() {
               ))
             ) : data?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No clients found. Create your first client to get started.
+                <TableCell colSpan={5} className="text-center py-16 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                    <Users className="h-10 w-10 text-muted-foreground/50 stroke-[1.5]" />
+                    <h3 className="text-sm font-semibold text-foreground">No clients found</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Create your first client to get started with API rate limiting.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

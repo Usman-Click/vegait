@@ -24,6 +24,8 @@ RateFlow sits between client applications and third-party APIs, deciding whether
 
 - 🔒 **Token Bucket Algorithm** — Atomic Redis Lua scripts prevent race conditions across distributed instances
 - 🛡️ **Failsafe Mode** — Automatic in-memory fallback when Redis goes down. Never blocks all traffic.
+- ⚡ **O(1) Request Latency** — Leveraging Next.js 15/16's stable `after()` hook, the rate-check response is sent instantly, deferring Redis queue logs to background microtasks.
+- 🏎️ **Client-Credential Caching** — Redis is utilized to cache client limits and API keys with negative caching for invalid keys, eliminating PostgreSQL queries on the request path.
 - 📊 **Real-time Dashboard** — Beautiful admin UI with live charts, client management, and health monitoring
 - ⚡ **Async Logging** — BullMQ processes request logs without blocking API responses
 - 🐳 **Docker Ready** — Full stack runs with a single `docker compose up --build`
@@ -178,7 +180,7 @@ open http://localhost:3000
 
 | Variable | Description | Default |
 |----------|------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://rateflow:rateflow@localhost:5432/rateflow` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://rateflow:rateflow@localhost:15432/rateflow` |
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 | `NEXT_PUBLIC_APP_URL` | Public URL of the app | `http://localhost:3000` |
 | `NODE_ENV` | Environment mode | `development` |

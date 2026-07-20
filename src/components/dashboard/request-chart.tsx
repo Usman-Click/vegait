@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart3 } from "lucide-react";
 import type { AnalyticsDataPoint } from "@/types";
 
 interface RequestChartProps {
@@ -64,8 +65,12 @@ export function RequestChart({
         {isLoading ? (
           <Skeleton className="h-[350px] w-full" />
         ) : data.length === 0 ? (
-          <div className="flex h-[350px] items-center justify-center text-sm text-muted-foreground">
-            No data available for this period
+          <div className="flex h-[350px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/30 text-center p-6">
+            <BarChart3 className="h-10 w-10 text-muted-foreground/50 stroke-[1.5]" />
+            <h3 className="text-sm font-semibold text-foreground">No historical data yet</h3>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Traffic will appear as requests are processed.
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={350}>
@@ -124,7 +129,7 @@ export function RequestChart({
               <Area
                 type="monotone"
                 dataKey="rejectedRequests"
-                name="Rejected"
+                name="Rate Limited"
                 stroke="#ef4444"
                 strokeWidth={2}
                 fillOpacity={1}
